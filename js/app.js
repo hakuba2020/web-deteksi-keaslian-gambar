@@ -16,6 +16,22 @@
     fft: 'Spektrum frekuensi (log-magnitude) dari potongan tengah. Lingkaran menandai puncak periodik terdeteksi. Pola titik berulang/simetris dapat berasal dari upsampling model AI.'
   };
 
+  /* ---------- tema terang / gelap ---------- */
+  const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => (document.documentElement.dataset.theme || (darkMQ.matches ? 'dark' : 'light')) === 'dark';
+  function themeChanged() {
+    // grafik kanvas membaca warna saat digambar → gambar ulang
+    if (S.result && !$('#results').hidden) renderSignal();
+  }
+  $('#themeBtn').addEventListener('click', () => {
+    const next = isDark() ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('forensik-theme', next); } catch (e) { /* abaikan */ }
+    themeChanged();
+  });
+  darkMQ.addEventListener('change', () => { if (!document.documentElement.dataset.theme) themeChanged(); });
+
   /* ---------- input ---------- */
   $('#pickBtn').addEventListener('click', e => { e.stopPropagation(); input.click(); });
   drop.addEventListener('click', () => input.click());
@@ -286,7 +302,7 @@
     bar.style.width = pct + '%'; thr.style.left = '65%'; thr.title = 'Ambang keputusan model (65%)';
     meter.append(bar, thr);
     const notes = [
-      `Peluang AI terkalibrasi (ambang keputusan 65%, garis putih). Logit mentah ${r.raw.toFixed(2)}.`
+      `Peluang AI terkalibrasi (ambang keputusan 65%, garis penanda). Logit mentah ${r.raw.toFixed(2)}.`
     ];
     if (r.lowRes) notes.push('Perhatian: resolusi gambar sangat kecil — akurasi model menurun.');
     notes.push('Model: Community Forensics frontier (ViT-Small, lisensi MIT), dilatih pada GPT Image, DALL·E 3, FLUX, Imagen, Midjourney, Seedream, Ideogram, dll. Akurasi uji pengembang ±90–96%; dapat keliru pada generator baru, gambar yang hanya sebagian diedit AI, grafis/ilustrasi non-foto, serta foto produk berlatar polos atau hasil retus berat (sering terbaca sebagai AI).');
@@ -366,10 +382,10 @@
       Charts.draw($('#chHist'), {
         type: 'line', height: 170,
         series: [
-          { name: 'Merah', color: '#ff6b6b', values: h.R },
-          { name: 'Hijau', color: '#4ade80', values: h.G },
-          { name: 'Biru', color: '#60a5fa', values: h.B },
-          { name: 'Luminans', color: '#cbd5e1', values: h.L }
+          { name: 'Merah', color: cssVar('--ch-r'), values: h.R },
+          { name: 'Hijau', color: cssVar('--ch-g'), values: h.G },
+          { name: 'Biru', color: cssVar('--ch-b'), values: h.B },
+          { name: 'Luminans', color: cssVar('--ch-l'), values: h.L }
         ],
         x: i => 'Nilai ' + i, tick: i => String(i), xTicks: [0, 64, 128, 192, 255], yFmt: pct, xTitle: 'intensitas (0–255)'
       });
@@ -378,7 +394,7 @@
       const r = st.fft.radial, n = r.length;
       Charts.draw($('#chRadial'), {
         type: 'line', height: 170, fill: true,
-        series: [{ name: 'Energi log', color: '#39d0c4', values: r }],
+        series: [{ name: 'Energi log', color: cssVar('--ch-1'), values: r }],
         yMin: Math.floor(Math.min(...r)),
         x: i => 'f = ' + ((i + 1) / (n + 1)).toFixed(2), tick: i => ((i + 1) / (n + 1)).toFixed(2), xTicks: [0, Math.round(n / 4), Math.round(n / 2), Math.round(3 * n / 4), n - 1],
         yFmt: v => v.toFixed(1), xTitle: 'frekuensi ternormalisasi (rendah → tinggi)'
@@ -392,7 +408,7 @@
       const tot = d.hist.reduce((a, b) => a + b, 0) || 1;
       Charts.draw($('#chDct'), {
         type: 'bar', height: 170,
-        series: [{ name: 'Blok', color: '#7aa7ff', values: vals.map(v => v / tot) }],
+        series: [{ name: 'Blok', color: cssVar('--ch-2'), values: vals.map(v => v / tot) }],
         yMax: Math.min(1, Math.max(...vals) / tot * 1.08) || 1,
         x: i => 'k = ' + (i - lim), tick: i => String(i - lim), xTicks: [0, lim / 2, lim, lim * 1.5, 2 * lim],
         yFmt: (v, tip) => (v * 100).toFixed(tip ? 2 : 0) + '%', xTitle: `koefisien / Q (Q = ${d.q})`

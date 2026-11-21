@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Forensik AI — Detektor Gambar</title>
   <meta name="description" content="Periksa apakah sebuah gambar dibuat oleh AI menggunakan analisis metadata, ELA, noise, dan spektrum frekuensi. Semua proses berjalan lokal di browser.">
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
+  <script>
+    /* terapkan tema tersimpan sebelum halaman digambar (mencegah kedipan) */
+    try { const t = localStorage.getItem('forensik-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
 </head>
 <body>
   <header class="top">
@@ -20,7 +24,12 @@
         <p>Lab analisis keaslian gambar</p>
       </div>
     </div>
-    <span class="badge"><span class="dot"></span>Diproses lokal · gambar tidak diunggah</span>
+    <div class="top-right">
+      <span class="badge"><span class="dot"></span>Diproses lokal · gambar tidak diunggah</span>
+      <button type="button" class="theme-btn" id="themeBtn" aria-label="Ganti tema terang/gelap" title="Ganti tema terang/gelap">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18V3z" fill="currentColor"/><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </div>
   </header>
 
   <main>
@@ -155,12 +164,12 @@
 
   <div class="toast" id="toast" hidden></div>
 
-  <script src="js/metadata.js?v=4"></script>
-  <script src="js/analysis.js?v=4"></script>
-  <script src="js/signal.js?v=4"></script>
-  <script src="js/charts.js?v=4"></script>
-  <script src="js/mlmodel.js?v=4"></script>
-  <script src="js/scoring.js?v=4"></script>
-  <script src="js/app.js?v=4"></script>
+  <script src="js/metadata.js?v=5"></script>
+  <script src="js/analysis.js?v=5"></script>
+  <script src="js/signal.js?v=5"></script>
+  <script src="js/charts.js?v=5"></script>
+  <script src="js/mlmodel.js?v=5"></script>
+  <script src="js/scoring.js?v=5"></script>
+  <script src="js/app.js?v=5"></script>
 </body>
 </html>
