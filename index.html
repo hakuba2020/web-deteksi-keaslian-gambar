@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forensik AI — Detektor Gambar</title>
+  <meta name="description" content="Periksa apakah sebuah gambar dibuat oleh AI menggunakan analisis metadata, ELA, noise, dan spektrum frekuensi. Semua proses berjalan lokal di browser.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="13" cy="13" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/>
+        <line x1="20" y1="20" x2="29" y2="29" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        <path d="M8 13h2l1.5-3 3 6 1.5-3h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <h1>FORENSIK<span>·</span>AI</h1>
+        <p>Lab analisis keaslian gambar</p>
+      </div>
+    </div>
+    <span class="badge"><span class="dot"></span>Diproses lokal · gambar tidak diunggah</span>
+  </header>
+
+  <main>
+    <!-- UPLOAD -->
+    <section id="dropzone" class="drop" tabindex="0" aria-label="Unggah gambar">
+      <input type="file" id="fileInput" accept="image/*" hidden>
+      <div class="drop-inner">
+        <svg class="drop-icon" viewBox="0 0 48 48" aria-hidden="true">
+          <rect x="6" y="9" width="36" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="2.2"/>
+          <circle cx="17" cy="19" r="3.5" fill="none" stroke="currentColor" stroke-width="2.2"/>
+          <path d="M8 35l10-10 7 7 5-5 10 10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+        </svg>
+        <h2>Seret &amp; lepas gambar di sini</h2>
+        <p>atau <button type="button" id="pickBtn" class="link">pilih file</button> · bisa juga tempel dengan <kbd>Ctrl</kbd>+<kbd>V</kbd></p>
+        <p class="muted small">JPG, PNG, WebP, GIF, AVIF · analisis metadata, ELA, noise residual &amp; spektrum FFT</p>
+      </div>
+    </section>
+
+    <section class="howto" id="howto">
+      <div class="how-card"><b>01 · Metadata</b><span>Mencari jejak generator AI (Stable Diffusion, Midjourney, DALL·E, Firefly, C2PA, IPTC) dan data kamera EXIF.</span></div>
+      <div class="how-card"><b>02 · Error Level</b><span>Mengompres ulang gambar dan memetakan selisihnya untuk melihat area yang diedit atau ditempel.</span></div>
+      <div class="how-card"><b>03 · Noise Sensor</b><span>Foto asli memiliki noise sensor merata; gambar AI sering terlalu halus di area datar.</span></div>
+      <div class="how-card"><b>04 · Spektrum FFT</b><span>Proses upsampling pada model AI dapat meninggalkan pola titik periodik di domain frekuensi.</span></div>
+    </section>
+
+    <!-- LOADING -->
+    <section id="loading" class="loading" hidden>
+      <div class="scanner"><div class="beam"></div></div>
+      <p id="loadingText">Memulai analisis…</p>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="results" hidden>
+      <div class="grid">
+        <div class="panel viewer">
+          <div class="tabs" role="tablist">
+            <button class="tab active" data-view="original" role="tab">Asli</button>
+            <button class="tab" data-view="ela" role="tab">ELA</button>
+            <button class="tab" data-view="noise" role="tab">Noise</button>
+            <button class="tab" data-view="fft" role="tab">Spektrum FFT</button>
+          </div>
+          <div class="stage" id="stage"></div>
+          <div class="controls" id="elaControls" hidden>
+            <label>Kualitas kompresi ulang <output id="elaQOut">90</output>
+              <input type="range" id="elaQ" min="50" max="98" value="90">
+            </label>
+            <label>Penguatan <output id="elaAOut">20×</output>
+              <input type="range" id="elaA" min="5" max="60" value="20">
+            </label>
+          </div>
+          <p class="view-help" id="viewHelp"></p>
+        </div>
+
+        <div class="side">
+          <div class="panel verdict" id="verdictPanel">
+            <div class="gauge">
+              <svg viewBox="0 0 120 120" aria-hidden="true">
+                <circle cx="60" cy="60" r="50" class="g-track"/>
+                <circle cx="60" cy="60" r="50" class="g-fill" id="gaugeFill"/>
+              </svg>
+              <div class="g-text"><b id="gaugeNum">0%</b><span>indikasi AI</span></div>
+            </div>
+            <div class="v-body">
+              <span class="v-label" id="verdictLabel">—</span>
+              <h2 id="verdictTitle">—</h2>
+              <p id="verdictDesc"></p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Indikator Temuan</h3>
+            <ul class="indicators" id="indicators"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <h3>Informasi File</h3>
+          <table class="kv" id="fileInfo"></table>
+        </div>
+        <div class="panel">
+          <h3>Metadata</h3>
+          <div id="metaBox"></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn" id="newBtn">↺ Analisis gambar lain</button>
+        <button type="button" class="btn primary" id="reportBtn">⤓ Unduh laporan (.txt)</button>
+      </div>
+    </section>
+
+    <p class="disclaimer">
+      <b>Penting:</b> Tidak ada metode yang 100% akurat. Hasil ini adalah <i>indikasi forensik</i>, bukan bukti mutlak.
+      Metadata dapat dihapus atau dipalsukan, dan kompresi media sosial dapat menghilangkan jejak.
+      Untuk keputusan penting, kombinasikan dengan pemeriksaan sumber, pencarian gambar terbalik, dan verifikasi
+      <i>Content Credentials</i> (contentcredentials.org/verify).
+    </p>
+  </main>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="js/metadata.js"></script>
+  <script src="js/analysis.js"></script>
+  <script src="js/scoring.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
