@@ -168,6 +168,36 @@ summary { cursor: pointer; padding: 9px 12px; font: 600 12.5px var(--mono); colo
 details pre { margin: 0; padding: 10px 12px 12px; max-height: 280px; overflow: auto; white-space: pre-wrap; word-break: break-word; font: 12px/1.5 var(--mono); color: #b8c7d6; border-top: 1px solid var(--line); }
 .empty { color: var(--muted); font-size: 13px; font-style: italic; }
 
+/* ---------- signal ---------- */
+.signal-panel { margin-top: 16px; }
+.sig-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.sig { background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+.sig-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.sig-top b { font: 600 13px var(--mono); color: var(--accent); }
+.sig .tag { background: var(--info-dim); color: var(--info); }
+.sig.ai .tag { background: var(--ai-dim); color: var(--ai); }
+.sig.real .tag { background: var(--real-dim); color: var(--real); }
+.sig.warn .tag { background: var(--warn-dim); color: var(--warn); }
+.sig-val { font: 700 20px var(--mono); }
+.sig p { margin: 0; font-size: 13px; color: var(--muted); }
+.meter { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.meter span { display: block; height: 100%; border-radius: 99px; background: var(--accent); }
+.sig.ai .meter span { background: var(--ai); }
+.sig.real .meter span { background: var(--real); }
+.sig.warn .meter span { background: var(--warn); }
+.charts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.chart-box { background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; }
+.chart-box h4 { margin: 0 0 4px; font-size: 14px; }
+.chart-box > p { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); }
+.chart { position: relative; }
+.chart canvas { display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 6px; font-size: 12px; color: var(--muted); }
+.legend span, .chart-tip div { display: inline-flex; align-items: center; gap: 6px; }
+.legend i, .chart-tip i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.chart-tip { position: absolute; pointer-events: none; background: #0b1117; border: 1px solid var(--line2); border-radius: 8px; padding: 6px 9px; font: 12px var(--mono); color: var(--text); white-space: nowrap; z-index: 5; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+.chart-tip div { display: flex; }
+.chart-tip b { display: block; margin-bottom: 2px; color: var(--muted); font-weight: 600; }
+
 /* ---------- actions ---------- */
 .actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; }
 .btn { background: var(--bg2); color: var(--text); border: 1px solid var(--line2); border-radius: 10px; padding: 10px 16px; font: 600 14px var(--sans); cursor: pointer; }
@@ -184,6 +214,7 @@ details pre { margin: 0; padding: 10px 12px 12px; max-height: 280px; overflow: a
 @media (max-width: 980px) {
   .grid, .grid2 { grid-template-columns: minmax(0, 1fr); }
   .howto { grid-template-columns: repeat(2, 1fr); }
+  .sig-cards, .charts { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 560px) {
   .howto { grid-template-columns: 1fr; }

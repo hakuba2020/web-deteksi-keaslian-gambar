@@ -231,7 +231,7 @@ window.Analysis = (function () {
     x.lineWidth = 1.5;
     for (const p of peaks.slice(0, 60)) { x.beginPath(); x.arc(p.x, p.y, 6, 0, Math.PI * 2); x.stroke(); }
 
-    return { canvas: c, N, peaks: peaks.length, peakPairs: Math.ceil(peaks.length / 2) };
+    return { canvas: c, N, peaks: peaks.length, peakPairs: Math.ceil(peaks.length / 2), radial: Array.from(rm.slice(1, H)) };
   }
 
   const CMAP = [[0, 0, 4], [40, 11, 84], [101, 21, 110], [159, 42, 99], [212, 72, 66], [245, 125, 21], [250, 193, 39], [252, 255, 164]];

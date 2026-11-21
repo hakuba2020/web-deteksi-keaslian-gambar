@@ -11,6 +11,10 @@ Semua analisis berjalan di browser — gambar tidak diunggah ke server mana pun.
 | **ELA** (Error Level Analysis) | Area yang diedit/ditempel; kualitas & penguatan dapat diatur |
 | **Noise residual** | Noise sensor kamera vs. permukaan "terlalu halus" khas gambar AI |
 | **Spektrum FFT** | Puncak periodik akibat upsampling pada model AI |
+| **Jejak sensor (CFA)** | Pola interpolasi Bayer/demosaicing dari sensor kamera asli — tidak dimiliki gambar sintetis |
+| **Watermark tak terlihat** | Dekode watermark `invisible-watermark` (dwtDct) bawaan Stable Diffusion v1/v2 & SDXL |
+| **Kompresi JPEG ganda** | Periodisitas histogram koefisien DCT — menandakan JPEG pernah disimpan ulang |
+| **Grafik sinyal** | Histogram warna RGB/luminans, profil spektrum radial, histogram koefisien DCT (interaktif) |
 
 Hasil digabung menjadi persentase indikasi AI, daftar indikator beserta alasannya,
 informasi file (termasuk SHA-256), dan laporan `.txt` yang bisa diunduh.

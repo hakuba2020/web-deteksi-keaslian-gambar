@@ -17,10 +17,37 @@ window.Scoring = (function () {
     return v < 1 ? '1/' + Math.round(1 / v) + ' dtk' : v + ' dtk';
   }
 
-  function evaluate({ meta, width, height, noise, fft, ela }) {
+  function evaluate({ meta, width, height, noise, fft, ela, sig }) {
     const ind = [];
     let L = 0;
     let confirmed = false;
+    sig = sig || {};
+
+    /* 0. Watermark tak terlihat Stable Diffusion */
+    if (sig.wm && sig.wm.detected) {
+      L += 7; confirmed = true;
+      ind.push({ kind: 'ai', w: 7, title: `Watermark tak terlihat ${sig.wm.best.name} terdeteksi`, detail: `${Math.round(sig.wm.best.score * 100)}% bit pesan watermark (invisible-watermark, dwtDct) cocok. Peluang kebetulan sangat kecil — gambar adalah keluaran asli Stable Diffusion.` });
+    }
+
+    /* 0b. Jejak CFA sensor kamera */
+    if (sig.cfa && sig.cfa.level !== 'na') {
+      const lossless = meta.format === 'PNG' || meta.format === 'WEBP' || (meta.jpegQuality && meta.jpegQuality >= 92);
+      if (sig.cfa.level === 'strong') {
+        L -= 1.3;
+        ind.push({ kind: 'real', w: -1.3, title: 'Jejak demosaicing sensor kamera (CFA) terdeteksi', detail: `Asimetri residu kanal hijau ${sig.cfa.ratio.toFixed(2)}× dengan konsistensi ${Math.round(sig.cfa.consistency * 100)}% antarblok — pola interpolasi Bayer khas sensor kamera.` });
+      } else if (sig.cfa.level === 'weak') {
+        L -= 0.4;
+        ind.push({ kind: 'real', w: -0.4, title: 'Sisa jejak CFA lemah', detail: `Rasio ${sig.cfa.ratio.toFixed(2)}×, konsistensi ${Math.round(sig.cfa.consistency * 100)}%. Konsisten dengan foto kamera yang telah diproses.` });
+      } else if (lossless && !(meta.exif.Make || meta.exif.Model)) {
+        L += 0.3;
+        ind.push({ kind: 'ai', w: 0.3, title: 'Tidak ada jejak sensor kamera (CFA)', detail: 'Pada file berkualitas tinggi ini tidak ditemukan pola demosaicing Bayer. Lemah: gambar yang diperkecil atau diproses berat juga kehilangan pola ini.' });
+      }
+    }
+
+    /* 0c. JPEG ganda */
+    if (sig.dj && (sig.dj.level === 'strong' || sig.dj.level === 'weak')) {
+      ind.push({ kind: 'info', w: 0, title: sig.dj.level === 'strong' ? 'JPEG pernah dikompresi ulang' : 'Kemungkinan kompresi JPEG ganda', detail: `Kekasaran histogram DCT ${sig.dj.roughness.toFixed(2)}. Gambar pernah disimpan ulang (disunting, diunggah ulang, atau dikonversi) — bukan bukti AI, tetapi berarti bukan file asli dari kamera.` });
+    }
 
     /* 1. Tanda tangan AI di metadata */
     const sigs = meta.signatures.slice().sort((a, b) => b.points - a.points);

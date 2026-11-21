@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Forensik AI — Detektor Gambar</title>
   <meta name="description" content="Periksa apakah sebuah gambar dibuat oleh AI menggunakan analisis metadata, ELA, noise, dan spektrum frekuensi. Semua proses berjalan lokal di browser.">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
   <header class="top">
@@ -44,6 +44,10 @@
       <div class="how-card"><b>02 · Error Level</b><span>Mengompres ulang gambar dan memetakan selisihnya untuk melihat area yang diedit atau ditempel.</span></div>
       <div class="how-card"><b>03 · Noise Sensor</b><span>Foto asli memiliki noise sensor merata; gambar AI sering terlalu halus di area datar.</span></div>
       <div class="how-card"><b>04 · Spektrum FFT</b><span>Proses upsampling pada model AI dapat meninggalkan pola titik periodik di domain frekuensi.</span></div>
+      <div class="how-card"><b>05 · Sensor CFA</b><span>Kamera asli meninggalkan pola interpolasi Bayer (demosaicing) yang tidak dimiliki gambar sintetis.</span></div>
+      <div class="how-card"><b>06 · Watermark</b><span>Mendekode watermark tak terlihat yang disisipkan Stable Diffusion &amp; SDXL pada keluaran aslinya.</span></div>
+      <div class="how-card"><b>07 · JPEG Ganda</b><span>Histogram koefisien DCT mengungkap apakah JPEG pernah dikompresi ulang setelah disunting.</span></div>
+      <div class="how-card"><b>08 · Grafik Sinyal</b><span>Histogram warna, profil spektrum radial, dan distribusi DCT ditampilkan sebagai grafik interaktif.</span></div>
     </section>
 
     <!-- LOADING -->
@@ -108,6 +112,28 @@
         </div>
       </div>
 
+      <div class="panel signal-panel">
+        <h3>Analisis Sinyal</h3>
+        <div class="sig-cards" id="sigCards"></div>
+        <div class="charts">
+          <div class="chart-box">
+            <h4>Histogram warna</h4>
+            <p>Sebaran intensitas per kanal. Celah atau sisir berulang menandakan penyesuaian level/kontras; lonjakan di ujung berarti piksel terbakar.</p>
+            <div id="chHist"></div>
+          </div>
+          <div class="chart-box">
+            <h4>Profil spektrum radial</h4>
+            <p>Energi rata-rata (log) dari frekuensi rendah ke tinggi. Foto alami menurun mulus; tonjolan atau ekor datar di frekuensi tinggi dapat menandakan artefak upsampling AI.</p>
+            <div id="chRadial"></div>
+          </div>
+          <div class="chart-box" id="dctBox">
+            <h4>Histogram koefisien DCT (0,1)</h4>
+            <p>Nilai koefisien setelah dibagi tabel kuantisasi file. Kompresi tunggal membentuk kurva halus; pola gerigi periodik menandakan JPEG pernah dikompresi ulang.</p>
+            <div id="chDct"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="actions">
         <button type="button" class="btn" id="newBtn">↺ Analisis gambar lain</button>
         <button type="button" class="btn primary" id="reportBtn">⤓ Unduh laporan (.txt)</button>
@@ -124,9 +150,11 @@
 
   <div class="toast" id="toast" hidden></div>
 
-  <script src="js/metadata.js"></script>
-  <script src="js/analysis.js"></script>
-  <script src="js/scoring.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/metadata.js?v=3"></script>
+  <script src="js/analysis.js?v=3"></script>
+  <script src="js/signal.js?v=3"></script>
+  <script src="js/charts.js?v=3"></script>
+  <script src="js/scoring.js?v=3"></script>
+  <script src="js/app.js?v=3"></script>
 </body>
 </html>
