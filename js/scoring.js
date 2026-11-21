@@ -17,11 +17,24 @@ window.Scoring = (function () {
     return v < 1 ? '1/' + Math.round(1 / v) + ' dtk' : v + ' dtk';
   }
 
-  function evaluate({ meta, width, height, noise, fft, ela, sig }) {
+  function evaluate({ meta, width, height, noise, fft, ela, sig, ml }) {
     const ind = [];
     let L = 0;
     let confirmed = false;
     sig = sig || {};
+
+    /* Detektor model AI (ML) — bobot = jarak logit dari ambang keputusan */
+    if (ml) {
+      let c = Math.max(-3, Math.min(3, ml.raw - 1.359375));
+      if (ml.lowRes) c *= 0.5;
+      L += c;
+      const pct = Math.round(ml.prob * 100);
+      ind.push({
+        kind: c >= 0 ? 'ai' : 'real', w: c,
+        title: `Model AI: ${pct}% peluang dibuat AI`,
+        detail: `Jaringan saraf ViT (Community Forensics) yang dilatih pada puluhan generator modern menilai gambar ini ${c >= 0 ? 'di atas' : 'di bawah'} ambang keputusannya (65%).${ml.lowRes ? ' Resolusi kecil — bobot dikurangi.' : ''}`
+      });
+    }
 
     /* 0. Watermark tak terlihat Stable Diffusion */
     if (sig.wm && sig.wm.detected) {

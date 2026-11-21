@@ -14,6 +14,7 @@ Semua analisis berjalan di browser — gambar tidak diunggah ke server mana pun.
 | **Jejak sensor (CFA)** | Pola interpolasi Bayer/demosaicing dari sensor kamera asli — tidak dimiliki gambar sintetis |
 | **Watermark tak terlihat** | Dekode watermark `invisible-watermark` (dwtDct) bawaan Stable Diffusion v1/v2 & SDXL |
 | **Kompresi JPEG ganda** | Periodisitas histogram koefisien DCT — menandakan JPEG pernah disimpan ulang |
+| **Detektor model AI (ML)** | Jaringan saraf ViT [Community Forensics frontier](https://huggingface.co/Thermostatic/community-forensics-frontier-detector-2026-08) (MIT, 44 MB) via onnxruntime-web — bekerja meski metadata sudah dihapus (mis. gambar WhatsApp). Model diunduh sekali lalu disimpan di cache browser |
 | **Grafik sinyal** | Histogram warna RGB/luminans, profil spektrum radial, histogram koefisien DCT (interaktif) |
 
 Hasil digabung menjadi persentase indikasi AI, daftar indikator beserta alasannya,

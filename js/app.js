@@ -117,9 +117,9 @@
       }
 
       await step('Menyusun kesimpulan…');
-      S.result = Scoring.evaluate({
-        meta: S.meta, width: img ? img.naturalWidth : 0, height: img ? img.naturalHeight : 0, noise, fft, ela, sig
-      });
+      S.ml = null;
+      S.evalArgs = { meta: S.meta, width: img ? img.naturalWidth : 0, height: img ? img.naturalHeight : 0, noise, fft, ela, sig };
+      S.result = Scoring.evaluate(S.evalArgs);
       S.stats = { ela, noise, fft, sig };
       render();
     } catch (err) {
@@ -151,14 +151,20 @@
     $('#results').hidden = false;
     setView('original');
 
-    // verdict
+    renderVerdict(false);
+    renderRest();
+    initML();
+  }
+
+  function renderVerdict(keep) {
+    const r = S.result;
     const vp = $('#verdictPanel');
     vp.classList.remove('ai', 'warn', 'real'); vp.classList.add(r.level);
     const pct = Math.round(r.p * 100);
     $('#gaugeNum').textContent = pct + '%';
     const fill = $('#gaugeFill');
     fill.style.stroke = r.level === 'ai' ? 'var(--ai)' : r.level === 'warn' ? 'var(--warn)' : 'var(--real)';
-    fill.style.strokeDashoffset = 314.16;
+    if (!keep) fill.style.strokeDashoffset = 314.16;
     requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.strokeDashoffset = 314.16 * (1 - r.p); }));
     $('#verdictLabel').textContent = r.label;
     $('#verdictTitle').textContent = r.title;
@@ -176,6 +182,10 @@
       list.appendChild(li);
     });
 
+  }
+
+  function renderRest() {
+    const m = S.meta, img = S.img;
     // file info
     const fi = $('#fileInfo'); fi.replaceChildren();
     const rows = [
@@ -194,6 +204,93 @@
     renderMeta();
     renderSignal();
     $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ---------- detektor model AI (ML) ---------- */
+  let mlAuto = (() => { try { return localStorage.getItem('forensik-ml-auto') !== '0'; } catch (e) { return true; } })();
+
+  function mlClass(c) {
+    const p = $('#mlPanel');
+    p.classList.remove('ai', 'real', 'warn');
+    if (c) p.classList.add(c);
+  }
+
+  async function initML() {
+    const panel = $('#mlPanel');
+    panel.hidden = !S.img;
+    if (!S.img) return;
+    mlClass(null);
+    if (mlAuto && await MLDetector.isCached()) runML();
+    else mlIdle();
+  }
+
+  function mlIdle() {
+    const body = $('#mlBody');
+    const mb = (MLDetector.MODEL_SIZE / 1048576).toFixed(0);
+    const btn = el('button', 'btn primary', `Jalankan detektor model AI (unduh ±${mb} MB sekali)`);
+    btn.type = 'button';
+    btn.addEventListener('click', runML);
+    const auto = el('label', 'ml-auto');
+    const cb = el('input'); cb.type = 'checkbox'; cb.checked = mlAuto;
+    cb.addEventListener('change', () => { mlAuto = cb.checked; try { localStorage.setItem('forensik-ml-auto', mlAuto ? '1' : '0'); } catch (e) { /* abaikan */ } });
+    auto.append(cb, document.createTextNode('Jalankan otomatis setelah model tersimpan'));
+    body.replaceChildren(
+      el('p', null, 'Jaringan saraf (ViT) yang dilatih membedakan gambar AI dan foto asli langsung dari pikselnya — tetap bekerja meskipun metadata sudah dihapus (mis. gambar dari WhatsApp).'),
+      btn, auto,
+      el('p', 'small', 'Model diunduh dari Hugging Face lalu disimpan di browser. Gambar Anda tetap diproses lokal dan tidak diunggah.')
+    );
+  }
+
+  async function runML() {
+    const token = S.file, img = S.img, body = $('#mlBody');
+    mlClass(null);
+    const txt = el('p', null, 'Menyiapkan…');
+    const meter = el('div', 'meter'), bar = el('span');
+    bar.style.width = '0%'; meter.appendChild(bar);
+    body.replaceChildren(el('div', 'ml-big', '…'), meter, txt);
+    try {
+      const r = await MLDetector.predict(img, p => {
+        if (S.file !== token) return;
+        if (p.stage === 'runtime') txt.textContent = 'Memuat runtime ONNX…';
+        else if (p.stage === 'download') {
+          const f = p.loaded / p.total;
+          bar.style.width = Math.round(f * 100) + '%';
+          txt.textContent = `Mengunduh model… ${(p.loaded / 1048576).toFixed(1)} / ${(p.total / 1048576).toFixed(1)} MB`;
+        } else if (p.stage === 'init') { bar.style.width = '100%'; txt.textContent = 'Menginisialisasi model…'; }
+        else if (p.stage === 'infer') txt.textContent = 'Menganalisis gambar dengan model…';
+      });
+      if (S.file !== token) return;
+      S.ml = r;
+      mlResult(r);
+      S.result = Scoring.evaluate(Object.assign({}, S.evalArgs, { ml: r }));
+      renderVerdict(true);
+    } catch (err) {
+      if (S.file !== token) return;
+      console.error(err);
+      mlClass('warn');
+      const retry = el('button', 'btn', 'Coba lagi');
+      retry.type = 'button';
+      retry.addEventListener('click', runML);
+      body.replaceChildren(el('p', null, 'Model gagal dijalankan: ' + (err.message || err) + '. Periksa koneksi internet (diperlukan untuk unduhan pertama).'), retry);
+    }
+  }
+
+  function mlResult(r) {
+    const pct = Math.round(r.prob * 100);
+    const cls = r.prob >= 0.65 ? 'ai' : r.prob <= 0.35 ? 'real' : 'warn';
+    mlClass(cls);
+    const verdict = { ai: 'Model menilai: kemungkinan buatan AI', real: 'Model menilai: kemungkinan foto asli', warn: 'Model ragu-ragu' }[cls];
+    const head = el('div', 'ml-row');
+    head.append(el('span', 'ml-big', pct + '%'), el('span', 'tag', verdict));
+    const meter = el('div', 'meter'), bar = el('span'), thr = el('i', 'thr');
+    bar.style.width = pct + '%'; thr.style.left = '65%'; thr.title = 'Ambang keputusan model (65%)';
+    meter.append(bar, thr);
+    const notes = [
+      `Peluang AI terkalibrasi (ambang keputusan 65%, garis putih). Logit mentah ${r.raw.toFixed(2)}.`
+    ];
+    if (r.lowRes) notes.push('Perhatian: resolusi gambar sangat kecil — akurasi model menurun.');
+    notes.push('Model: Community Forensics frontier (ViT-Small, lisensi MIT), dilatih pada GPT Image, DALL·E 3, FLUX, Imagen, Midjourney, Seedream, Ideogram, dll. Akurasi uji pengembang ±90–96%; dapat keliru pada generator baru, gambar yang hanya sebagian diedit AI, grafis/ilustrasi non-foto, serta foto produk berlatar polos atau hasil retus berat (sering terbaca sebagai AI).');
+    $('#mlBody').replaceChildren(head, meter, ...notes.map(n => el('p', null, n)));
   }
 
   /* ---------- analisis sinyal ---------- */
@@ -406,6 +503,8 @@
     if (st.ela) L.push(`ELA rata-rata    : ${st.ela.mean.toFixed(3)} (maks ${st.ela.max.toFixed(1)})`);
     if (st.noise) L.push(`Noise            : lantai ${st.noise.floor.toFixed(3)}, median ${st.noise.median.toFixed(3)}, blok halus ${(st.noise.smoothFrac * 100).toFixed(1)}%`);
     if (st.fft) L.push(`FFT              : ${st.fft.N}x${st.fft.N}, ${st.fft.peakPairs} puncak periodik`);
+    if (S.ml) L.push(`Model AI (ML)    : peluang AI ${(S.ml.prob * 100).toFixed(1)}% (logit ${S.ml.raw.toFixed(3)}, ambang 65%) — ${S.ml.model}`);
+    else L.push('Model AI (ML)    : tidak dijalankan');
     const sg = st.sig || {};
     if (sg.cfa && sg.cfa.level !== 'na') L.push(`CFA (sensor)     : ${sg.cfa.level}, rasio ${sg.cfa.ratio.toFixed(3)}, konsistensi ${(sg.cfa.consistency * 100).toFixed(0)}%`);
     if (sg.wm) L.push(sg.wm.checked ? `Watermark SD     : ${sg.wm.detected ? 'TERDETEKSI (' + sg.wm.best.name + ')' : 'tidak ditemukan'} — SDXL ${(sg.wm.sdxl * 100).toFixed(0)}%, SD1 ${(sg.wm.sd1 * 100).toFixed(0)}%` : `Watermark SD     : dilewati (${sg.wm.reason})`);

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Forensik AI — Detektor Gambar</title>
   <meta name="description" content="Periksa apakah sebuah gambar dibuat oleh AI menggunakan analisis metadata, ELA, noise, dan spektrum frekuensi. Semua proses berjalan lokal di browser.">
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
   <header class="top">
@@ -94,6 +94,11 @@
             </div>
           </div>
 
+          <div class="panel ml-panel" id="mlPanel">
+            <h3>Detektor Model AI <span class="ml-sub">machine learning</span></h3>
+            <div id="mlBody"></div>
+          </div>
+
           <div class="panel">
             <h3>Indikator Temuan</h3>
             <ul class="indicators" id="indicators"></ul>
@@ -150,11 +155,12 @@
 
   <div class="toast" id="toast" hidden></div>
 
-  <script src="js/metadata.js?v=3"></script>
-  <script src="js/analysis.js?v=3"></script>
-  <script src="js/signal.js?v=3"></script>
-  <script src="js/charts.js?v=3"></script>
-  <script src="js/scoring.js?v=3"></script>
-  <script src="js/app.js?v=3"></script>
+  <script src="js/metadata.js?v=4"></script>
+  <script src="js/analysis.js?v=4"></script>
+  <script src="js/signal.js?v=4"></script>
+  <script src="js/charts.js?v=4"></script>
+  <script src="js/mlmodel.js?v=4"></script>
+  <script src="js/scoring.js?v=4"></script>
+  <script src="js/app.js?v=4"></script>
 </body>
 </html>
